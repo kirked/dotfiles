@@ -32,3 +32,26 @@ alias vi=/usr/local/bin/nvim
 umask 0027
 ulimit -S -n 1024
 
+if [[ ! -z $PS1 ]]; then
+  echo > /dev/null
+else
+  SSH_ENV="$HOME/.ssh/environment"
+  
+  function start_ssh_agent {
+    echo -n "Initialising new SSH agent..."
+    /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "$SSH_ENV"
+    echo succeeded
+    chmod 0600 "$SSH_ENV"
+    source "$SSH_ENV" > /dev/null
+    /usr/bin/ssh-add $HOME/.ssh/coding-id
+  }
+  
+  if [ -f "$SSH_ENV" ]; then
+    source "$SSH_ENV" > /dev/null
+    echo "checking for SSH agent pid $SSH_AGENT_PID..."
+    ps -ef | grep $SSH_AGENT_PID | grep ssh-agent$ > /dev/null || start_ssh_agent;
+  else
+    start_ssh_agent;
+  fi
+fi
+
